@@ -18,7 +18,7 @@
 ## 2. 기술 스택
 
 - **Backend:** Spring Boot 3.x, JDK 21, Gradle
-- **Frontend:** Mustache (SSR) + 일부 Thymeleaf / 또는 React 18 + Vite
+- **Frontend:** Mustache (SSR)  ← 기본. SPA 필요 시 React 18 + Vite
 - **DB:** MySQL 8 (운영) / H2 (테스트)
 - **Cache·Session:** Redis 7
 - **Auth:** Spring Security + 세션 기반 (또는 JWT)
@@ -37,7 +37,7 @@ controller → service → repository → DB
 ```
 
 - **패키지 구조 / 담당자 매핑:** `docs/03_아키텍처_정의서.md`
-- **공유 레이어 (수정 시 책임개발자 승인 필수):** `common/`, `security/`, `config/`, `entity/`
+- **공유 레이어 (수정 시 책임개발자 승인 필수):** `common/`, `security/`, `config/`, `external/`
 
 ---
 
@@ -113,7 +113,7 @@ docker compose -f docker-compose.dev.yml up -d
 - **재시도:** 최대 2회, 지수 백오프
 - **폴백:** 실패 시 `{{폴백 동작}}`
 - **테스트:** 실제 호출 금지, `@MockBean`으로 응답 stub
-- **호출 위치:** `service/external/{{ServiceName}}Client`
+- **호출 위치:** `external/{{external_api}}/{{ServiceName}}Client`
 
 ---
 
@@ -121,9 +121,9 @@ docker compose -f docker-compose.dev.yml up -d
 
 | 한국어 | 영문 | 의미 |
 | --- | --- | --- |
-| 예약 | reservation | (도메인 정의) |
-| 슬롯 | slot | (도메인 정의) |
-| 접수 | reception | (도메인 정의) |
+| {{핵심 용어 1}} | {{english_1}} | {{도메인 정의 — 예: 예약 시스템의 "슬롯" = 특정 시간대 예약 가능 단위}} |
+| {{핵심 용어 2}} | {{english_2}} | {{도메인 정의}} |
+| {{핵심 용어 3}} | {{english_3}} | {{도메인 정의}} |
 
 (필요시 `docs/agent_context/glossary.md`로 분리)
 

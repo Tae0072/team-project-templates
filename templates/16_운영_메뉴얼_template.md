@@ -272,9 +272,9 @@ aws logs tail /aws/app/{{프로젝트명}} --filter-pattern "ERROR" --since 1h
 
 | 항목 | 링크 |
 |------|------|
-| 인프라 다이어그램 | [`docs/03_아키텍처_정의서.md`](../03_아키텍처_정의서.md) |
-| CI/CD 파이프라인 | [`docs/20_CICD_파이프라인.md`](../20_CICD_파이프라인.md) |
-| Runbook 모음 | [`docs/runbooks/`](../runbooks/) |
+| 인프라 다이어그램 | [`docs/03_아키텍처_정의서.md`](./03_아키텍처_정의서.md) |
+| CI/CD 파이프라인 | [`docs/20_CICD_파이프라인.md`](./20_CICD_파이프라인.md) |
+| Runbook 모음 | [`docs/runbooks/`](./runbooks/) |
 | 모니터링 대시보드 | {{Grafana URL}} |
 | 알람 채널 | Slack `#alerts`, `#incident` |
 

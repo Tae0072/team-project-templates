@@ -127,11 +127,11 @@ sequenceDiagram
 
     U->>FE: /me
     FE->>BE: GET /me
-    BE->>DB: SELECT staff WHERE id=session.userId
+    BE->>DB: SELECT member WHERE id=session.userId
     BE-->>FE: me.mustache
     U->>FE: 수정 제출
     FE->>BE: POST /me (form, CSRF)
-    BE->>DB: UPDATE staff
+    BE->>DB: UPDATE member
     BE-->>FE: redirect /me?updated
 ```
 
