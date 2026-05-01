@@ -80,7 +80,7 @@ spring.data.redis.port=6379
 spring.session.store-type=redis
 
 # Redis 세션 네임스페이스
-spring.session.redis.namespace=hospital:session:dev
+spring.session.redis.namespace={{project}}:session:dev
 
 # 세션 타임아웃 (3600초 = 60분, 서버 세션 타임아웃과 동일)
 spring.session.timeout=3600
@@ -152,7 +152,7 @@ logging.level.org.hibernate=INFO
 logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
 
 # 애플리케이션 로그 레벨 (개발: DEBUG)
-logging.level.com.hospital.reservation=DEBUG
+logging.level.{{BASE_PACKAGE}}=DEBUG
 
 # 콘솔 로그 패턴
 logging.pattern.console=%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n

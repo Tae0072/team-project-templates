@@ -104,7 +104,7 @@ spring.data.redis.timeout=3000ms
 spring.session.store-type=redis
 
 # Redis 세션 네임스페이스
-spring.session.redis.namespace=hospital:session:prod
+spring.session.redis.namespace={{project}}:session:prod
 
 # 세션 타임아웃 (1800초 = 30분)
 spring.session.timeout=1800
@@ -173,10 +173,10 @@ logging.level.org.springframework.security=WARN
 logging.level.org.hibernate=WARN
 
 # 애플리케이션 로그 레벨 (운영: INFO)
-logging.level.com.hospital.reservation=INFO
+logging.level.{{BASE_PACKAGE}}=INFO
 
 # 로그 파일 출력 (운영 필수)
-logging.file.name=/opt/hospital/logs/hospital-app.log
+logging.file.name=/opt/{{project}}/logs/{{project}}-app.log
 logging.file.max-size=50MB
 logging.file.max-history=90
 logging.file.total-size-cap=5GB

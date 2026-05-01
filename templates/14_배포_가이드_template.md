@@ -64,14 +64,6 @@ sudo apt install -y openjdk-21-jdk
 java -version
 ```
 
-### 2.3 Node.js 20+ (프론트엔드 빌드 시)
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
-sudo apt install -y nodejs
-node -v && npm -v
-```
-
 ---
 
 ## 3. 환경변수 설정
@@ -218,3 +210,93 @@ docker compose restart app
 | Redis 연결 실패 | 컨테이너 미기동 | `docker compose up -d redis` |
 | 세션 끊김 | Redis 재시작 | 세션 저장소 확인 |
 | 외부 API 401 | 키 만료 / 오타 | API 키 갱신 |
+
+---
+
+## 11. 롤백 절차
+
+> 운영 배포 후 문제 발생 시 즉시 실행. **DevOps/QA + Lead 합동.**
+
+### 11.1 Docker 이미지 롤백
+
+```bash
+# 1. 이전 이미지 태그 확인
+docker images | grep {{project}}
+
+# 2. docker-compose.prod.yml의 image 태그를 이전 버전으로 변경
+# image: ghcr.io/{{org}}/{{project}}:v1.0.0-prev  ← 이전 버전으로
+
+# 3. 재배포
+docker compose -f docker-compose.prod.yml up -d --force-recreate app
+
+# 4. 헬스체크
+sleep 15
+curl -f https://{{도메인}}/actuator/health || echo "❌ 롤백 실패"
+echo "✅ 롤백 완료"
+```
+
+### 11.2 DB 롤백 (스키마 변경 시)
+
+```bash
+# DDL 변경사항이 있는 경우에만 실행
+# 사전에 백업된 SQL 파일을 복원
+docker compose exec -T mysql   mysql -u root -p${MYSQL_ROOT_PASSWORD} {{project}} < backup/pre-deploy-backup.sql
+```
+
+> ⚠️ DB 롤백은 **데이터 손실 위험**이 있으므로 Lead의 최종 승인 후 실행.
+
+### 11.3 롤백 결정 기준
+
+| 상황 | 조치 |
+| --- | --- |
+| 배포 후 헬스체크 실패 | 즉시 자동 롤백 |
+| Critical 에러율 1% 초과 | 5분 내 수동 롤백 결정 |
+| 시연 시나리오 핵심 기능 불가 | 즉시 롤백 + 백업 영상 |
+| 비핵심 기능 문제 | 핫픽스 후 재배포 (롤백 없이) |
+
+---
+
+## 12. 배포 전 체크리스트
+
+### 12.1 스테이징 배포 전 (W1 금, W2 금)
+
+```
+[ ] develop 브랜치 CI green
+[ ] 전원 로컬 bootRun 성공 확인
+[ ] application-staging.properties 환경변수 확인
+[ ] DB 마이그레이션 스크립트 검토 (DDL 변경 있으면)
+[ ] 스테이징 배포 후 헬스체크: /actuator/health
+[ ] 스테이징 URL 팀 전체 공유
+```
+
+### 12.2 운영 배포 전 (W3 목)
+
+```
+[ ] 스테이징에서 시연 시나리오 전체 통과 확인
+[ ] 통합 테스트 + E2E 테스트 CI green
+[ ] DB 백업 실행 (배포 전 스냅샷)
+[ ] 운영 환경변수 재확인 (민감 정보 점검)
+[ ] docker-compose.prod.yml 최신 이미지 태그 확인
+[ ] 배포 시간: 팀원 2명 이상 대기 중
+[ ] 롤백 절차 숙지 (11번 섹션)
+```
+
+### 12.3 운영 배포 후
+
+```
+[ ] /actuator/health green 확인
+[ ] DB 연결: /actuator/health/db green
+[ ] Redis 연결: /actuator/health/redis green
+[ ] 시연 시나리오 핵심 화면 1회 수동 확인
+[ ] 시드 데이터 삽입: sh scripts/seed-data.sh
+[ ] 외부 URL 팀 전체 공유 + Slack 공지
+[ ] 배포 완료 태그: git tag v1.0.0 && git push origin v1.0.0
+```
+
+---
+
+## 📌 변경 이력
+
+| 버전 | 날짜 | 작성자 | 주요 변경 |
+| --- | --- | --- | --- |
+| v1.0 | YYYY-MM-DD | DevOps/QA | 초기 작성 |
