@@ -48,7 +48,7 @@ Spring Boot App (8080)
 
 | 영역 | 기술 | 버전 | 비고 |
 | --- | --- | --- | --- |
-| Runtime | JDK | 17 / 21 | |
+| Runtime | JDK | 21 | LTS |
 | Framework | Spring Boot | 3.x | |
 | View | Mustache | | SSR |
 | DB | MySQL | 8.0 | |
@@ -74,21 +74,28 @@ com.example.{{project}}
 │   ├── interceptor/LayoutModelInterceptor.java
 │   ├── exception/GlobalExceptionHandler.java
 │   └── dto/ApiResponse.java
-├── domain/                           [Lead — 변경 금지]
-│   ├── {{entity1}}/{{Entity1}}.java
-│   └── {{entity2}}/{{Entity2}}.java
-├── feature/
+│   [domain 패키지 — 아래 구조 참조]
+├── domain/
+│   ├── auth/                         [Dev A — Lead와 공동]
+│   │   ├── AuthController.java
+│   │   ├── AuthService.java
+│   │   └── Member.java (Entity)
 │   ├── {{moduleA}}/                  [Dev A]
 │   │   ├── {{ModuleA}}Controller.java
 │   │   ├── {{ModuleA}}Service.java
 │   │   └── {{ModuleA}}Repository.java
 │   ├── {{moduleB}}/                  [Dev B]
 │   │   └── ...
-│   └── {{moduleC}}/                  [Dev C]
-│       └── ...
-└── llm/                              [Lead — 공유 레이어]
-    ├── LlmService.java
-    └── ClaudeClient.java
+│   ├── {{moduleC}}/                  [Dev C]
+│   │   └── ...
+│   ├── admin/                        [Dev D]
+│   │   └── AdminController.java
+│   └── stats/                        [Dev D]
+│       └── StatsService.java
+└── external/                         [Lead — 공유 레이어]
+    └── {{external_api}}/
+        ├── {{External}}Client.java
+        └── {{External}}Response.java
 ```
 
 ---
@@ -97,29 +104,79 @@ com.example.{{project}}
 
 ### 4.1 책임개발자 (Tech Lead)
 - `config/`, `common/`, `domain/` 전체
-- 공유 서비스: SlotService, LayoutModelInterceptor, LlmService, SecurityFilter
+- 공유 서비스: {{CoreService}}, LayoutModelInterceptor, {{External}}Client, SecurityFilter
 - 배포, CI, 문서 정합 관리
 
 ### 4.2 개발자 A — {{MODULE_A}}
-- `feature/{{moduleA}}/**` 전체
+- `domain/{{moduleA}}/**` 전체
 - 관련 Mustache 템플릿: `templates/{{moduleA}}/**`
 - 관련 테스트: `test/**/{{moduleA}}/**`
 
 ### 4.3 개발자 B — {{MODULE_B}}
-- `feature/{{moduleB}}/**`
+- `domain/{{moduleB}}/**`
 - ...
 
 ### 4.4 개발자 C — {{MODULE_C}}
-- `feature/{{moduleC}}/**`
+- `domain/{{moduleC}}/**`
 - ...
 
 ---
 
 ## 5. 공유 레이어 — 책임개발자 단독 소유
 
-### 5.1 SlotService — 예약/슬롯 중복 방지 (해당 시)
+### 5.1 {{CoreService}} — {{핵심 공유 비즈니스 로직}} (해당 시)
 ### 5.2 LayoutModelInterceptor — 공통 레이아웃 Model 자동 주입
-### 5.3 Entity 클래스 — 변경 금지 (schema 변경은 PR 리뷰 필수)
+
+```java
+// 모든 요청에서 자동으로 현재 사용자·CSRF·레이아웃 정보 주입
+@Component
+public class LayoutModelInterceptor implements HandlerInterceptor {
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response,
+                           Object handler, ModelAndView mv) {
+        if (mv != null) {
+            // 현재 인증 사용자 정보
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                mv.addObject("currentUser", auth.getName());
+                mv.addObject("isLoggedIn", true);
+                mv.addObject("isAdmin", auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+            } else {
+                mv.addObject("isLoggedIn", false);
+            }
+        }
+    }
+}
+```
+
+### 5.3 {{External}}Client — 외부 API 클라이언트 (Lead 소유)
+
+```java
+// external/{{external_api}}/{{External}}Client.java
+@Component
+@RequiredArgsConstructor
+public class {{External}}Client {
+
+    private final WebClient webClient;
+
+    @Value("${external.api.key}")
+    private String apiKey;
+
+    public {{External}}Response call({{External}}Request request) {
+        return webClient.post()
+            .uri("/api/v1/{{endpoint}}")
+            .header("Authorization", "Bearer " + apiKey)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono({{External}}Response.class)
+            .timeout(Duration.ofSeconds(10))
+            .block();
+    }
+}
+```
+
+### 5.4 Entity 클래스 — 변경 금지 (schema 변경은 PR 리뷰 필수)
 
 ---
 

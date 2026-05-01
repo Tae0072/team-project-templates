@@ -82,7 +82,43 @@ src/test/java/{{BASE_PACKAGE}}/
 
 ---
 
-## 2. 일별 상세 일정
+## 2. Auth·회원 모듈 핵심 기술 요구사항
+
+> **시연 시 "인증·보안을 어떻게 구현했나"는 반드시 나오는 질문이다.**
+> W1에 완성되어야 다른 5명이 인증을 전제로 개발을 시작할 수 있다.
+> 팀 전체가 의존하는 `getCurrentMember()` 인터페이스는 서명 확정 후 변경 금지.
+
+| 요구사항 | 구현 방식 | 완료 목표 | 왜 중요한가 |
+| --- | --- | --- | --- |
+| **비밀번호 단방향 해시** | BCrypt (strength 12) — `PasswordEncoder` Bean | W1 화 | 평문 저장 시 보안 사고 |
+| **Spring Security 인증 흐름** | `CustomUserDetailsService` + `UsernamePasswordAuthenticationFilter` | W1 수 | 전 팀원 인증 기반 |
+| **세션 + Redis 저장** | `spring.session.store-type=redis` — Lead 설정 협의 | W1 수 | 서버 재시작 시 로그인 유지 |
+| **`getCurrentMember()` 공개 메서드** | `Authentication` → 이메일 → `Member` 조회 — **서명 확정 후 변경 금지** | W1 수 확정 | Dev B/C/D 전원 의존 |
+| **이메일 중복 검증** | `existsByEmail()` + `BusinessException(DUPLICATE_EMAIL)` | W1 화 | 데이터 정합성 |
+| **로그인 실패 처리** | `AuthenticationFailureHandler` → `redirect:/login?error` | W1 수 | UX + 보안 |
+| **로그아웃 세션 무효화** | `LogoutSuccessHandler` → Redis 세션 삭제 | W1 수 | 세션 탈취 방지 |
+| **Role 기반 접근 제어** | Lead의 `SecurityConfig` URL 매핑과 협의 필수 | W1 수 | 권한 누락 시 전체 보안 실패 |
+
+```java
+// ✅ 전 팀원이 사용하는 핵심 공개 메서드 — 서명 변경 시 반드시 Slack #dev 사전 공지
+public Member getCurrentMember(Authentication authentication) {
+    String email = ((UserDetails) authentication.getPrincipal()).getUsername();
+    return memberRepository.findByEmail(email)
+        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+}
+
+// ✅ SecurityConfig 경로 매핑 — Lead와 W1 화요일까지 확정
+// /auth/**    → permitAll()
+// /admin/**   → hasRole("ADMIN")
+// /**         → authenticated()
+```
+
+> **Dev A → 팀 전체 공지 의무:**
+> - `getCurrentMember()` 서명 변경 시: 48시간 전 `#dev` 채널 공지
+> - `Member` Entity 컬럼 추가·변경 시: Lead와 사전 협의 + PR에 ERD 업데이트 포함
+
+
+## 3. 일별 상세 일정
 
 ### 🟦 W0 — 킥오프 참여
 
@@ -188,7 +224,7 @@ src/test/java/{{BASE_PACKAGE}}/
 
 ---
 
-## 3. 기술 기준 & 코딩 지침
+## 4. 기술 기준 & 코딩 지침
 
 ### 3.1 인증·회원 모듈 코딩 기준
 
@@ -254,7 +290,7 @@ if (!resource.getOwner().equals(currentMember)) {
 
 ---
 
-## 4. AI 에이전트 활용 가이드 (Dev A 특화)
+## 5. AI 에이전트 활용 가이드 (Dev A 특화)
 
 ### Dev A가 AI를 활용하면 좋은 작업
 
@@ -273,7 +309,7 @@ if (!resource.getOwner().equals(currentMember)) {
 
 ---
 
-## 5. 협업 포인트
+## 6. 협업 포인트
 
 | 협업 대상 | 시점 | 내용 |
 | --- | --- | --- |
@@ -285,7 +321,7 @@ if (!resource.getOwner().equals(currentMember)) {
 
 ---
 
-## 6. 블로커 에스컬레이션
+## 7. 블로커 에스컬레이션
 
 ```
 막혔을 때 행동 순서:
@@ -300,7 +336,7 @@ if (!resource.getOwner().equals(currentMember)) {
 
 ---
 
-## 7. 기술 블로그 주제 가이드
+## 8. 기술 블로그 주제 가이드
 
 | 주제 | 내용 | 어필 포인트 |
 | --- | --- | --- |
@@ -311,7 +347,7 @@ if (!resource.getOwner().equals(currentMember)) {
 
 ---
 
-## 8. 일일 체크리스트 (Dev A용)
+## 9. 일일 체크리스트 (Dev A용)
 
 ### 매일 Stand-up 전 (09:00)
 
@@ -344,7 +380,7 @@ if (!resource.getOwner().equals(currentMember)) {
 
 ---
 
-## 9. 성공 기준 (Dev A 개인)
+## 10. 성공 기준 (Dev A 개인)
 
 | 기준 | 목표 | 측정 방법 |
 | --- | --- | --- |
