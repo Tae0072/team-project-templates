@@ -159,3 +159,75 @@ refs #123
   - `application-*.properties` (예제 `.example`만 커밋)
   - `.env`, `*.pem`, `*.key`
   - `build/`, `out/`, `.gradle/`
+
+---
+
+
+---
+
+## 8. AI 에이전트 보조 커밋 & PR 가이드라인
+
+### 8.1 AI 보조 커밋 표시 원칙
+
+- **커밋 메시지에 AI 도구 명시 금지** — 작성자가 코드의 품질·정확성에 책임진다.
+- AI로 생성한 코드도 사람이 검토·수정했으면 일반 커밋으로 작성.
+- 예외: 1000줄 이상 대규모 AI 생성 PR은 PR 본문에 1줄 명시.
+
+### 8.2 AI 보조 PR 라벨
+
+GitHub Labels에 아래 라벨을 사전 등록한다:
+
+| 라벨 | 조건 | 추가 리뷰 |
+| --- | --- | --- |
+| `ai-generated` | 코드의 50%+ AI 생성 | 환각 체크리스트(17번 문서) 적용 |
+| `ai-assisted` | 일부 AI 보조 (자동완성 수준) | 일반 리뷰 |
+
+### 8.3 AI 생성 코드 PR 크기 관리
+
+AI가 한 번에 1500줄을 만들더라도 **PR은 400줄 이하로 분할**:
+
+```
+분할 기준:
+- Entity + Repository → 1 PR
+- Service + 단위 테스트 → 1 PR  
+- Controller + Mustache → 1 PR
+```
+
+### 8.4 환각(Hallucination) 의심 커밋 처리
+
+```
+커밋 전 체크:
+[ ] ./gradlew build 통과
+[ ] ./gradlew test 통과
+[ ] import된 클래스가 실제 존재 (IDE 빨간 줄 없음)
+[ ] 호출한 메서드 시그니처가 라이브러리 공식 문서와 일치
+[ ] 환경변수 하드코딩 없음
+```
+
+---
+
+## 9. 태그 & 릴리스 전략
+
+```bash
+# 스테이징 릴리스 태그 (W3 배포 시)
+git tag -a v1.0.0-staging -m "스테이징 배포 - W3 통합 테스트 완료"
+git push origin v1.0.0-staging
+
+# 운영 릴리스 태그 (W3 목 운영 배포 시)
+git tag -a v1.0.0 -m "v1.0.0 운영 배포 - 시연 버전"
+git push origin v1.0.0
+
+# 태그 목록 확인
+git tag -l
+```
+
+**GitHub Release** 생성 (운영 배포 시):
+- Tag: `v1.0.0`
+- Title: `v1.0.0 - {{PROJECT_NAME}} 시연 버전`
+- Body: 주요 기능 목록 + 알려진 이슈
+
+## 📌 변경 이력
+
+| 버전 | 날짜 | 작성자 | 주요 변경 |
+| --- | --- | --- | --- |
+| v1.0 | YYYY-MM-DD | Lead | 초기 작성 |

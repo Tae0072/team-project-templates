@@ -161,3 +161,11 @@ templates/
 
 ### 📄 화면 NN — 비밀번호 변경
 - **URL:** `GET /me/password`, `POST /me/password`
+
+---
+
+## 📌 변경 이력
+
+| 버전 | 날짜 | 작성자 | 주요 변경 |
+| --- | --- | --- | --- |
+| v1.0 | YYYY-MM-DD | Lead | 초기 작성 |

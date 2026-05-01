@@ -213,3 +213,143 @@ public String list(@PageableDefault(size = 20) Pageable pageable, Model model) {
 ```
 
 Mustache에서 페이지 번호/이전·다음 처리 파셜(`partials/pagination.mustache`)을 공유 컴포넌트로 둔다.
+
+---
+
+## 11. ADR (Architecture Decision Record)
+
+> 팀이 내린 기술 결정을 기록한다. Lead가 작성하고 PR에 포함한다.
+
+### ADR-001: 인증 방식 — 세션 기반 선택
+
+| 항목 | 내용 |
+| --- | --- |
+| **날짜** | YYYY-MM-DD |
+| **상태** | 승인 |
+| **결정** | Spring Security 세션 + Redis 기반 인증 |
+| **대안** | JWT (Stateless) |
+| **이유** | SSR(Mustache) 환경에서 세션이 자연스럽고, Redis 세션으로 수평 확장 가능. JWT는 토큰 무효화가 복잡. |
+| **결과** | Redis 의존성 추가. 단일 서버 이상 환경 시 Redis Cluster 필요. |
+
+### ADR 템플릿 (복제해서 사용)
+
+```markdown
+### ADR-{{번호}}: {{결정 제목}}
+
+| 항목 | 내용 |
+| --- | --- |
+| **날짜** | YYYY-MM-DD |
+| **상태** | 제안 / 승인 / 폐기 |
+| **결정** | |
+| **대안** | |
+| **이유** | |
+| **결과** | |
+```
+
+---
+
+## 12. 에러 페이지 매핑
+
+```java
+// GlobalExceptionHandler.java (Lead 소유)
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    // 도메인 예외 — JSON 또는 리디렉션
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<?>> handleBusiness(BusinessException e) {
+        return ResponseEntity.status(e.getErrorCode().getStatus())
+            .body(ApiResponse.error(e.getErrorCode()));
+    }
+
+    // 인가 실패 — 403 페이지
+    @ExceptionHandler(AccessDeniedException.class)
+    public String handleForbidden() {
+        return "error/403";
+    }
+
+    // 존재하지 않는 리소스 — 404 페이지
+    @ExceptionHandler(EntityNotFoundException.class)
+    public String handleNotFound() {
+        return "error/404";
+    }
+
+    // 서버 에러 — 500 페이지
+    @ExceptionHandler(Exception.class)
+    public String handleGeneral() {
+        return "error/500";
+    }
+}
+```
+
+```
+src/main/resources/templates/error/
+├── 403.mustache    ← "접근 권한이 없습니다"
+├── 404.mustache    ← "페이지를 찾을 수 없습니다"
+└── 500.mustache    ← "일시적인 오류가 발생했습니다"
+```
+
+---
+
+## 13. Spring Actuator & 헬스체크 설정
+
+```properties
+# application.properties
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=when-authorized
+management.endpoint.health.probes.enabled=true
+management.info.env.enabled=true
+
+info.app.name=${spring.application.name}
+info.app.version=1.0.0
+```
+
+```yaml
+# 헬스체크 엔드포인트 (DevOps/QA 활용)
+GET /actuator/health        → 전체 상태
+GET /actuator/health/db     → DB 연결
+GET /actuator/health/redis  → Redis 연결
+GET /actuator/info          → 앱 정보
+```
+
+---
+
+## 14. 로깅 전략
+
+```xml
+<!-- logback-spring.xml -->
+<configuration>
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <!-- SQL 로깅 (N+1 감지용) -->
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="org.hibernate.type.descriptor.sql" level="TRACE"/>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="FILE"/>
+        </root>
+        <!-- 운영에서는 SQL 로깅 OFF -->
+    </springProfile>
+</configuration>
+```
+
+**로그 레벨 기준**
+
+| 레벨 | 사용 기준 |
+| --- | --- |
+| ERROR | 시스템 오류, 외부 API 실패, DB 연결 실패 |
+| WARN | 폴백 처리 진입, 비정상 요청, 성능 임계 초과 |
+| INFO | 핵심 비즈니스 이벤트 (예약 생성, 결제 완료) |
+| DEBUG | 개발 환경 디버깅용 (운영 비활성화) |
+
+---
+
+## 📌 변경 이력
+
+| 버전 | 날짜 | 작성자 | 주요 변경 |
+| --- | --- | --- | --- |
+| v1.0 | YYYY-MM-DD | Lead | 초기 작성 |

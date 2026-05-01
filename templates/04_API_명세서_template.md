@@ -86,6 +86,75 @@
 - 비인증 접근: `302 /login`
 - 권한 부족: `403` + `error/403.mustache`
 - API 비인증: `401` + JSON
+### 1.10 HTTP 상태 코드 사용 기준
+
+| 상태 코드 | 의미 | 사용 시점 |
+| --- | --- | --- |
+| 200 OK | 성공 | 조회·수정 성공 |
+| 201 Created | 생성 성공 | POST 생성 성공 (REST API) |
+| 302 Found | 리디렉션 | SSR 폼 처리 후 PRG 패턴 |
+| 400 Bad Request | 잘못된 요청 | 유효성 검증 실패 |
+| 401 Unauthorized | 비인증 | 로그인 필요 (API 요청) |
+| 403 Forbidden | 권한 없음 | 로그인됐지만 권한 부족 |
+| 404 Not Found | 리소스 없음 | 존재하지 않는 ID 조회 |
+| 409 Conflict | 충돌 | 중복 데이터 (이메일 중복 등) |
+| 500 Internal Server Error | 서버 오류 | 예상치 못한 서버 에러 |
+
+### 1.11 공통 에러 코드
+
+| 에러 코드 | HTTP 상태 | 설명 |
+| --- | --- | --- |
+| `VALIDATION_ERROR` | 400 | @Valid 유효성 검증 실패 |
+| `INVALID_INPUT` | 400 | 비즈니스 규칙 위반 입력 |
+| `UNAUTHORIZED` | 401 | 비인증 접근 |
+| `FORBIDDEN` | 403 | 권한 없는 접근 |
+| `NOT_FOUND` | 404 | 리소스 없음 |
+| `DUPLICATE_EMAIL` | 409 | 이메일 중복 |
+| `INVALID_STATUS_TRANSITION` | 409 | 유효하지 않은 상태 전이 |
+| `EXTERNAL_API_ERROR` | 503 | 외부 API 오류 (폴백 처리 중) |
+| `INTERNAL_ERROR` | 500 | 서버 내부 오류 |
+
+```java
+// ErrorCode enum (Lead 소유 — common/exception/ErrorCode.java)
+@Getter
+@RequiredArgsConstructor
+public enum ErrorCode {
+    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "입력값이 올바르지 않습니다"),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "NOT_FOUND", "리소스를 찾을 수 없습니다"),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "DUPLICATE_EMAIL", "이미 사용 중인 이메일입니다"),
+    // ...
+    ;
+    private final HttpStatus status;
+    private final String code;
+    private final String message;
+}
+```
+
+### 1.12 페이징 응답 형식
+
+```json
+{
+  "success": true,
+  "data": {
+    "content": [ { "id": 1, "..." } ],
+    "pageNumber": 0,
+    "pageSize": 20,
+    "totalElements": 150,
+    "totalPages": 8,
+    "first": true,
+    "last": false
+  }
+}
+```
+
+```java
+// 페이징 요청 파라미터 (모든 목록 API 공통)
+// ?page=0&size=20&sort=createdAt,desc
+@GetMapping("/{{resource}}")
+public String list(@PageableDefault(size = 20, sort = "createdAt",
+                   direction = Sort.Direction.DESC) Pageable pageable,
+                   Model model) { ... }
+```
 
 ---
 
@@ -194,3 +263,12 @@
 | 1 | GET | `/` | - | 메인 |
 | 2 | GET | `/login` | - | 로그인 화면 |
 | ... | ... | ... | ... | ... |
+
+---
+
+## 📌 변경 이력
+
+| 버전 | 날짜 | 작성자 | 주요 변경 |
+| --- | --- | --- | --- |
+| v1.0 | YYYY-MM-DD | Lead | 초기 작성 |
+| v1-FINAL | YYYY-MM-DD | Lead | W2 금 API Lock — 이후 변경 시 팀 합의 필수 |
