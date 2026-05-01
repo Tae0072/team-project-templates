@@ -74,7 +74,6 @@ com.example.{{project}}
 │   ├── interceptor/LayoutModelInterceptor.java
 │   ├── exception/GlobalExceptionHandler.java
 │   └── dto/ApiResponse.java
-│   [domain 패키지 — 아래 구조 참조]
 ├── domain/
 │   ├── auth/                         [Dev A — Lead와 공동]
 │   │   ├── AuthController.java

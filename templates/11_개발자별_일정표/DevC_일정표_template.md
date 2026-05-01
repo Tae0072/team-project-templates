@@ -323,6 +323,15 @@ public Page<{{ModuleC}}Response> search({{ModuleC}}SearchCondition cond, Pageabl
 
 ## 9. 일일 체크리스트 (Dev C용)
 
+### 매일 Stand-up 전 (09:00)
+
+```
+[ ] develop 최신화 (git pull origin develop)
+[ ] 어제 작업한 브랜치 CI 상태 확인
+[ ] 오늘 집중할 작업 1가지 결정 (너무 많이 잡지 않기)
+[ ] 리뷰 요청 대기 중인 PR 없는지 확인
+```
+
 ### 코드 작성 중
 
 ```
@@ -340,7 +349,8 @@ public Page<{{ModuleC}}Response> search({{ModuleC}}SearchCondition cond, Pageabl
 [ ] 외부 API 실패 케이스 테스트 포함
 [ ] PR 크기 400줄 이하
 [ ] AI 코드 환각 체크 (존재하지 않는 메서드 없음)
-[ ] API Key 하드코딩 없음
+[ ] API Key / 비밀번호 평문 하드코딩 없음
+[ ] 테스트: 성공 케이스 + 실패 케이스(외부 API 포함) 각 1개 이상
 ```
 
 ---

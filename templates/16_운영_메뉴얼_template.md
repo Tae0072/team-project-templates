@@ -282,10 +282,10 @@ aws logs tail /aws/app/{{프로젝트명}} --filter-pattern "ERROR" --since 1h
 
 ## 9. 변경 이력
 
-| 일자 | 작성자 | 변경 내용 |
-|------|--------|-----------|
-| {{YYYY-MM-DD}} | {{DevOps}} | 초안 |
-| {{YYYY-MM-DD}} | {{DevOps}} | 발표 주 비상 연락망 갱신 |
+| 버전 | 날짜 | 작성자 | 주요 변경 |
+|------|------|--------|----------|
+| v1.0 | YYYY-MM-DD | DevOps/QA | 초기 작성 |
+| v1.1 | YYYY-MM-DD | DevOps/QA | 발표 주 비상 연락망 갱신 |
 
 ---
 
