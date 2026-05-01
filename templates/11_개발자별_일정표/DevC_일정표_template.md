@@ -12,9 +12,9 @@
 
 ## 📌 변경 이력
 
-| 버전 | 날짜 | 주요 변경 |
+| 버전 | 날짜 | 작성자 | 주요 변경 |
 | --- | --- | --- |
-| v1.0 | YYYY-MM-DD | 초기 작성 |
+| v1.0 | YYYY-MM-DD | Dev C | 초기 작성 |
 
 ---
 
@@ -295,7 +295,22 @@ public Page<{{ModuleC}}Response> search({{ModuleC}}SearchCondition cond, Pageabl
 
 ---
 
-## 7. 기술 블로그 주제 가이드
+## 7. 블로커 에스컬레이션
+
+```
+막혔을 때 행동 순서:
+1. 스스로 30분 이내 해결 시도 (검색, AI 보조)
+2. 30분 이상 막히면 → #dev 채널에 "🔴 블로커: [내용] — [예상 영향]" 공지 + Lead DM
+3. Lead 60분 내 응답 없으면 → 해당 기능 잠시 보류 + 다음 작업으로 전환
+4. 일일 회고에서 반드시 공유
+
+{{MODULE_C}}·외부 연동 관련 타 모듈·Lead 소유 코드 수정이 필요할 때:
+→ #dev 채널에 변경 요청 공지 → 해당 소유자 승인 후 진행 (직접 수정 금지)
+외부 API Client(`external/` 패키지) 변경 시: Lead 승인 필수
+```
+
+
+## 8. 기술 블로그 주제 가이드
 
 | 주제 | 내용 | 어필 포인트 |
 | --- | --- | --- |
@@ -306,7 +321,7 @@ public Page<{{ModuleC}}Response> search({{ModuleC}}SearchCondition cond, Pageabl
 
 ---
 
-## 8. 일일 체크리스트 (Dev C용)
+## 9. 일일 체크리스트 (Dev C용)
 
 ### 코드 작성 중
 
@@ -330,7 +345,7 @@ public Page<{{ModuleC}}Response> search({{ModuleC}}SearchCondition cond, Pageabl
 
 ---
 
-## 9. 성공 기준 (Dev C 개인)
+## 10. 성공 기준 (Dev C 개인)
 
 | 기준 | 목표 | 측정 방법 |
 | --- | --- | --- |

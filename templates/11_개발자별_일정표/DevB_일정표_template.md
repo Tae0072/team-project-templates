@@ -12,9 +12,9 @@
 
 ## 📌 변경 이력
 
-| 버전 | 날짜 | 주요 변경 |
+| 버전 | 날짜 | 작성자 | 주요 변경 |
 | --- | --- | --- |
-| v1.0 | YYYY-MM-DD | 초기 작성 |
+| v1.0 | YYYY-MM-DD | Dev B | 초기 작성 |
 
 ---
 
@@ -139,28 +139,44 @@ src/test/java/{{BASE_PACKAGE}}/
 
 ```java
 // 동시성 검증 예시 — 반드시 통과해야 함
-@Test
-@DisplayName("동시에 같은 자원에 접근해도 중복이 발생하지 않는다")
-void 동시_접근_중복_방지() throws InterruptedException {
-    // Given
-    int threadCount = 10;
-    ExecutorService service = Executors.newFixedThreadPool(threadCount);
-    CountDownLatch latch = new CountDownLatch(threadCount);
+@SpringBootTest
+class {{ModuleB}}ConcurrencyTest {
 
-    // When
-    for (int i = 0; i < threadCount; i++) {
-        service.submit(() -> {
-            try {
-                {{moduleBService}}.create{{ModuleB}}(request);
-            } finally {
-                latch.countDown();
-            }
-        });
+    @Autowired {{ModuleB}}Service {{moduleBService}};
+    @Autowired {{ModuleB}}Repository repository;
+
+    @Test
+    @DisplayName("동시에 같은 자원에 접근해도 중복이 발생하지 않는다")
+    void 동시_접근_중복_방지() throws InterruptedException {
+        // Given
+        int threadCount = 10;
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failCount = new AtomicInteger(0);
+
+        // When
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    {{moduleBService}}.create{{ModuleB}}(request);
+                    successCount.incrementAndGet();
+                } catch (BusinessException e) {
+                    failCount.incrementAndGet(); // 중복 방지로 인한 실패는 정상
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+        latch.await(10, TimeUnit.SECONDS);
+        executorService.shutdown();
+
+        // Then — DB 건수 = 성공 건수 (중복 없음 보장)
+        long totalInDB = repository.count();
+        assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
+        assertThat(totalInDB).isEqualTo(successCount.get());
+        System.out.println("성공: " + successCount.get() + "건, 실패(중복방지): " + failCount.get() + "건");
     }
-    latch.await();
-
-    // Then
-    // 기대 결과 검증
 }
 ```
 
@@ -301,7 +317,22 @@ if (!current.getStatus().canTransitionTo(newStatus)) {
 
 ---
 
-## 7. 기술 블로그 주제 가이드
+## 7. 블로커 에스컬레이션
+
+```
+막혔을 때 행동 순서:
+1. 스스로 30분 이내 해결 시도 (검색, AI 보조)
+2. 30분 이상 막히면 → #dev 채널에 "🔴 블로커: [내용] — [예상 영향]" 공지 + Lead DM
+3. Lead 60분 내 응답 없으면 → 해당 기능 잠시 보류 + 다음 작업으로 전환
+4. 일일 회고에서 반드시 공유
+
+{{MODULE_B}} 관련 타 모듈·Lead 소유 코드 수정이 필요할 때:
+→ #dev 채널에 변경 요청 공지 → 해당 소유자 승인 후 진행 (직접 수정 금지)
+트랜잭션·동시성 전략 변경 시: Lead와 반드시 사전 합의 후 #dev 공지
+```
+
+
+## 8. 기술 블로그 주제 가이드
 
 | 주제 | 내용 | 어필 포인트 |
 | --- | --- | --- |
@@ -312,7 +343,7 @@ if (!current.getStatus().canTransitionTo(newStatus)) {
 
 ---
 
-## 8. 일일 체크리스트 (Dev B용)
+## 9. 일일 체크리스트 (Dev B용)
 
 ### 매일 Stand-up 전 (09:00)
 
@@ -346,7 +377,7 @@ if (!current.getStatus().canTransitionTo(newStatus)) {
 
 ---
 
-## 9. 성공 기준 (Dev B 개인)
+## 10. 성공 기준 (Dev B 개인)
 
 | 기준 | 목표 | 측정 방법 |
 | --- | --- | --- |
